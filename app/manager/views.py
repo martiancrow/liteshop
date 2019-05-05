@@ -31,7 +31,7 @@ def before_request():
 def index():
     
     #return render_template('user/postlist.html', cid=classid)
-    return 'manager index page'
+    return 'manager index page 1'
 
 
 @manager.route('/login', methods=['GET', 'POST'])
