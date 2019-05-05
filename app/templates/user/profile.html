@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}move to - {{ user.ua_user_nick }}{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <img class="img-rounded profile-thumbnail" src="{{ user.gravatar(size=256) }}">
+    <div class="profile-header">
+        <h1>{{ user.ua_user_nick }}</h1>
+        <p>
+           
+        </p>
+		<br/>
+        <p>
+            {% if user == current_user.user %}
+            <a class="btn btn-default" href="#">编辑资料</a>
+            {% endif %}
+        </p>
+    </div>
+</div>
+<h3>Posts by {{ user.ua_user_nick }}</h3>
+{% include 'user/_posts.html' %}
+{% endblock %}
+
+{% block page_foot %}
+{% endblock %}
