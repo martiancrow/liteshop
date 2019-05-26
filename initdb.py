@@ -12,16 +12,17 @@ with app.app_context():
 
     db.metadata.create_all(db.engine)
     
-    manager = ua_user.query.filter_by(ua_user_email='lxl@mv2.xyz')
+    manager = ua_user.query.filter_by(ua_user_email='lxl@mv2.xyz').first()
 
     if manager is None:
+        manager = ua_user()
         manager.ua_user_email = 'lxl@mv2.xyz'
         manager.ua_email_confirmed = True
         manager.ua_user_system_role = SystemRole.MANAGER
         manager.ua_user_nick = '物管'
         manager.password = "lxlloveme7"
 
-        db.session.add(user)
+        db.session.add(manager)
         db.session.commit()
     
 

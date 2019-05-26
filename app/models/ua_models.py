@@ -32,7 +32,7 @@ class ua_user(db.Model):
     ua_user_system_role = db.Column(db.Integer, default=SystemRole.CLIENT)
     ua_user_email = db.Column(db.String(128), unique=True, index=True)
     ua_user_moblie = db.Column(db.String(64), unique=True, index=True)
-    ua_user_nick = db.Column(db.String(64), unique=True, index=True)
+    ua_user_nick = db.Column(db.String(64))
     ua_user_headimg = db.Column(db.String(256))
     ua_pwd_hash = db.Column(db.String(128))
     ua_email_confirmed = db.Column(db.Boolean, default=False)
@@ -47,7 +47,13 @@ class ua_user(db.Model):
         super(ua_user, self).__init__(**kwargs)
 
         if self.ua_user_uuid is None:
-            self.ua_user_uuid = str(uuid.uuid5(uuid.NAMESPACE_URL, str(uuid.uuid1())))
+
+            while True:
+                self.ua_user_uuid = str(uuid.uuid5(uuid.NAMESPACE_URL, str(uuid.uuid1())))
+                checkuuid = ua_user.query.filter_by(ua_user_uuid=self.ua_user_uuid).first()
+
+                if checkuuid == None:
+                    break
 
     @property
     def password(self):
@@ -114,6 +120,53 @@ class ua_user(db.Model):
         db.session.commit()
         return True
 
+    def get_dict(self):
+
+        userdict = self.__dict__
+
+        if "_sa_instance_state" in userdict:
+            del userdict["_sa_instance_state"]
+
+        return userdict
+
+    @staticmethod
+    def generate_fake(count=100):
+        from random import seed, randint
+        import forgery_py
+
+        seed()
+        for i in range(count):
+
+            email = forgery_py.internet.email_address()
+            mobile = forgery_py.basic.number(at_least=18908710050, at_most=18988299999)
+
+            while True:
+
+                checkemail = ua_user.query.filter_by(ua_user_email=email).first()
+
+                if checkemail == None:
+                    break
+
+            while True:
+
+                checkmobile = ua_user.query.filter_by(ua_user_moblie=mobile).first()
+
+                if checkmobile == None:
+                    break
+
+            u = ua_user(ua_user_email=email,
+                    ua_user_moblie=mobile,
+                    ua_user_nick=forgery_py.internet.user_name(),
+                    ua_email_confirmed=True,
+                    ua_mobile_confirmed=True,
+                    ua_user_headimg='/manager/getheadimage/74258971672e7e4b7c8c7a959c5a4b92',
+                    ua_createtime=forgery_py.date.date(True))
+
+            u.password = 'testpassword'
+
+            db.session.add(u)
+            db.session.commit()
+
     def __repr__(self):
         return '<ua_user %r>' % self.ua_user_nick
 
@@ -173,7 +226,7 @@ class ua_session(db.Model):
     __tablename__ = 'ua_session_base'
     ua_sb_key = db.Column(db.String(256), primary_key=True)
     ua_sb_ip = db.Column(db.String(128))
-    user_uuid = db.Column(db.String(128), unique=True, index=True)
+    user_uuid = db.Column(db.String(128))
     ua_sb_exceed = db.Column(db.SmallInteger, default=7200)
     ua_sb_lastheart = db.Column(db.BigInteger, default=time.time)
     ua_sb_createtime = db.Column(db.BigInteger, default=time.time)
@@ -266,7 +319,8 @@ class User(UserMixin):
             db.session.add(self.sess)
             db.session.commit()
 
-            self.user = ua_user.query.get(self.sess.user_uuid)
+            self.user = ua_user.query.filter_by(ua_user_uuid=self.sess.user_uuid).first()
+
 
         if not stophreat:
             self.sess.ua_sb_lastheart = time.time()

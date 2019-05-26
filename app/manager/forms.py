@@ -10,3 +10,14 @@ class LoginForm(FlaskForm):
     submit = SubmitField('登录')
 
 
+class UserSettingForm(FlaskForm):
+    email = StringField('', validators=[DataRequired(), Length(1, 128), Email()])
+    mobile = StringField('', validators=[DataRequired(), Length(1, 64)])
+    nick = StringField('', validators=[DataRequired(), Length(1, 64)])
+
+class PasswordSettingForm(FlaskForm):
+    password = PasswordField('', validators=[DataRequired()])
+    new_password = PasswordField('', validators=[DataRequired()])
+    rep_new_password = PasswordField('', validators=[DataRequired()])
+
+

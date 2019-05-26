@@ -9,6 +9,7 @@ import app.models.store_models
 from app import create_app, db
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
+from app.models.ua_models import ua_user
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 manager = Manager(app)
@@ -29,10 +30,10 @@ def test():
 	unittest.TextTestRunner(verbosity=2).run(tests)
 
 @manager.command
-def addtestdata():
+def addtestuser():
 	"""Auto add test data"""
 	#User.generate_fake()
-	res_post.generate_fake()
+	ua_user.generate_fake()
 
 
 if __name__ == "__main__":

@@ -28,7 +28,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('ua_sb_key'),
     mysql_ENGINE='MEMORY'
     )
-    op.create_index(op.f('ix_ua_session_base_user_uuid'), 'ua_session_base', ['user_uuid'], unique=True)
     op.create_table('ua_users',
     sa.Column('ua_user_id', sa.Integer(), nullable=False),
     sa.Column('ua_user_uuid', sa.String(length=128), nullable=True),
@@ -68,6 +67,5 @@ def downgrade():
     op.drop_index(op.f('ix_ua_users_ua_user_moblie'), table_name='ua_users')
     op.drop_index(op.f('ix_ua_users_ua_user_email'), table_name='ua_users')
     op.drop_table('ua_users')
-    op.drop_index(op.f('ix_ua_session_base_user_uuid'), table_name='ua_session_base')
     op.drop_table('ua_session_base')
     # ### end Alembic commands ###
