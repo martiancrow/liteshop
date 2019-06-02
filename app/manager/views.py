@@ -11,6 +11,7 @@ from . import manager
 from .forms import LoginForm, UserSettingForm, PasswordSettingForm
 from .. import db
 from ..models.ua_models import ua_user, User, SystemRole
+from ..models.store_models import store_goods_classify
 
 def manager_required(f):
 
@@ -40,6 +41,18 @@ def index():
         headimgurl = current_user.user.ua_user_headimg
 
     return render_template('manager/index.html', headimgurl=headimgurl)
+
+@manager.route('/goodsclassifymanager', methods=['GET'])
+@manager.route('/goodsclassifymanager/<string:puuid>', methods=['GET'])
+@manager_required
+def goodsclassifymanager(puuid='0'):
+
+    headimgurl = url_for('static', filename='images/manager_blank_headimg.jpg')
+    
+    if current_user.user.ua_user_headimg and current_user.user.ua_user_headimg != '':
+        headimgurl = current_user.user.ua_user_headimg
+
+    return render_template('manager/goodsclassifymanager.html', headimgurl=headimgurl, pid=puuid)
 
 @manager.route('/usermanager', methods=['GET'])
 @manager_required
@@ -179,7 +192,99 @@ def uploadheadimg():
 
     return jsonify(result)
 
+@manager.route('/adduser', methods=['GET', 'POST'])
+@manager_required
+def adduser():
+
+    result = {
+        'code': 500,
+    }
+
+    nick = request.form['nick']
+    mobile = request.form['mobile']
+    email = request.form['email']
+    password = request.form['password']
+    role = request.form['role']
+    enable = bool(request.form['enable'])
+
+
+    if nick and mobile and email and password and role:
+
+        role = SystemRole.MANAGER if role == 'manager' else SystemRole.CLIENT
+
+        user = ua_user(
+            ua_user_nick=nick, 
+            ua_user_moblie=mobile, 
+            ua_user_email=email,
+            ua_user_system_role=role,
+            ua_user_status=enable)
+
+        user.password = password
+
+        db.session.add(user)
+        db.session.commit()
+
+        result["code"] = 200
+
+
+    return jsonify(result)
+
+@manager.route('/deluser', methods=['GET', 'POST'])
+@manager_required
+def deluser():
+    result = {
+        'code': 500,
+    }
+
+    uuid = request.form['uuid']
+
+    if uuid:
+
+        user = ua_user.query.filter_by(ua_user_uuid=uuid).first()
+
+        if user:
+
+            db.session.delete(user)
+            db.session.commit()
+
+        result["code"] = 200
+
+
+    return jsonify(result)
+
+@manager.route('/edituser', methods=['GET', 'POST'])
+@manager_required
+def edituser():
+    result = {
+        'code': 500,
+    }
+
+    uuid = request.form['uuid']
+
+    if uuid:
+
+        user = ua_user.query.filter_by(ua_user_uuid=uuid).first()
+
+        if user:
+
+            if 'enable' in request.form:
+                user.ua_user_status = request.form['enable']
+
+
+            if 'role' in request.form:
+                role = SystemRole.MANAGER if request.form['role'] == 'manager' else SystemRole.CLIENT
+                user.ua_user_system_role = role
+
+            db.session.add(user)
+            db.session.commit()
+
+        result["code"] = 200
+
+
+    return jsonify(result)
+
 @manager.route('/getuser', methods=['GET', 'POST'])
+@manager_required
 def getuser():
 
 
@@ -194,7 +299,6 @@ def getuser():
     if keyword:
         rule = or_(ua_user.ua_user_nick.like(f'%{keyword}%'), ua_user.ua_user_email.like(f'%{keyword}%'), ua_user.ua_user_moblie.like(f'%{keyword}%'))
         users = users.filter(rule)
-        print(users)
 
     total = users.count()
     users = users.order_by(ua_user.ua_createtime.desc()).limit(limit).offset(start).all()
@@ -202,11 +306,14 @@ def getuser():
 
     for item in users:
         data = {
+            'uuid': item.ua_user_uuid,
             'nick': item.ua_user_nick,
             'moblie': item.ua_user_moblie,
             'email': item.ua_user_email,
+            'role': '管理员' if item.ua_user_system_role == SystemRole.MANAGER else '用户',
             'status': '启用' if item.ua_user_status else '禁用',
-            'createtime': item.ua_createtime.strftime('%Y-%m-%d %H:%M'),
+            #'createtime': utc2local(item.ua_createtime).strftime('%Y-%m-%d %H:%M'),
+            'createtime': item.ua_createtime,
         }
         userlist.append(data)
 
@@ -216,6 +323,123 @@ def getuser():
         'draw': draw,
         'total': total,
         'data': userlist
+    }
+
+    return jsonify(result)
+
+@manager.route('/addgoodsclassify', methods=['GET', 'POST'])
+@manager_required
+def addgoodsclassify():
+
+    result = {
+        'code': 500,
+    }
+
+    name = request.form['name']
+    puuid = request.form['pid'] if 'pid' in request.form.keys() else '0'
+
+    if name and puuid:
+
+        classify = store_goods_classify(
+            store_goods_classify_puuid=puuid, 
+            store_goods_classify_name=name)
+
+        db.session.add(classify)
+        db.session.commit()
+
+        result["code"] = 200
+
+
+    return jsonify(result)
+
+@manager.route('/delgoodsclassify', methods=['GET', 'POST'])
+@manager_required
+def delgoodsclassify():
+    result = {
+        'code': 500,
+    }
+
+    uuid = request.form['uuid']
+
+    if uuid:
+
+        classify = store_goods_classify.query.filter_by(store_goods_classify_uuid=uuid).first()
+
+        if classify:
+
+            db.session.delete(classify)
+            db.session.commit()
+
+        result["code"] = 200
+
+
+    return jsonify(result)
+
+@manager.route('/editgoodsclassify', methods=['GET', 'POST'])
+@manager_required
+def editgoodsclassify():
+    result = {
+        'code': 500,
+    }
+
+    uuid = request.form['uuid']
+
+    if uuid:
+
+        classify = store_goods_classify.query.filter_by(store_goods_classify_uuid=uuid).first()
+
+        if classify:
+
+            if 'name' in request.form:
+                classify.store_goods_classify_name = request.form['name']
+
+            db.session.add(classify)
+            db.session.commit()
+
+        result["code"] = 200
+
+
+    return jsonify(result)
+
+@manager.route('/getgoodsclassify', methods=['GET', 'POST'])
+@manager.route('/getgoodsclassify/<string:puuid>', methods=['GET', 'POST'])
+@manager_required
+def getgoodsclassify(puuid='0'):
+
+    limit = int(request.form['limit']) if 'limit' in request.form.keys() else 10
+    start = int(request.form['start']) if 'start' in request.form.keys() else 0
+    page = int(request.form['page']) if 'page' in request.form.keys() else 1
+    draw = int(request.form['draw']) if 'draw' in request.form.keys() else 1
+    keyword = request.form['keyword'] if 'keyword' in request.form.keys() else None
+
+    classify = store_goods_classify.query
+
+    
+    classify = classify.filter(store_goods_classify.store_goods_classify_puuid == puuid)
+
+    if keyword:
+        rule = or_(store_goods_classify.store_goods_classify_name.like(f'%{keyword}%'))
+        classify = classify.filter(rule)
+    else:
+        pass
+
+    total = classify.count()
+    classify = classify.order_by(store_goods_classify.store_goods_classify_createtime.asc()).limit(limit).offset(start).all()
+    classifylist = []
+
+    for item in classify:
+        data = {
+            'uuid': item.store_goods_classify_uuid,
+            'name': item.store_goods_classify_name,
+        }
+        classifylist.append(data)
+
+
+    result = {
+        'code': 200,
+        'draw': draw,
+        'total': total,
+        'data': classifylist
     }
 
     
@@ -233,3 +457,9 @@ def getheadimage(filename):
 
     return response
 
+def utc2local(utc_dtm):
+    # UTC 时间转本地时间（ +8:00 ）
+    local_tm = datetime.fromtimestamp( 0 )
+    utc_tm = datetime.utcfromtimestamp( 0 )
+    offset = local_tm - utc_tm
+    return utc_dtm + offset

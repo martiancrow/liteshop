@@ -7,6 +7,7 @@
 <link href="{{ url_for('static', filename='vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='vendors/switchery/dist/switchery.min.css') }} rel="stylesheet">
 {% endblock %}
 
 {% block libscripts %}
@@ -26,6 +27,7 @@
 <script src="{{ url_for('static', filename='vendors/jszip/dist/jszip.min.js') }}"></script>
 <script src="{{ url_for('static', filename='vendors/pdfmake/build/pdfmake.min.js') }}"></script>
 <script src="{{ url_for('static', filename='vendors/pdfmake/build/vfs_fonts.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/switchery/dist/switchery.min.js') }}"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -37,8 +39,131 @@
         </div>
         <div class="x_content">
             <div class="row">
-                <div class="col-sm-6">
-                    <!--<div class="dataTables_length" id="datatable-responsive_length"><label>显示 <select name="datatable-responsive_length" aria-controls="datatable-responsive" class="form-control input-sm"><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option></select> 项结果</label></div></div><div class="col-sm-6"><div id="datatable-responsive_filter" class="dataTables_filter"><label>搜索:<input type="search" class="form-control input-sm" placeholder="" aria-controls="datatable-responsive"></label></div>-->
+                <div class="col-xs-12">
+                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target=".bs-modal-adduser">添加用户</button>
+                    <!-- adduser modal -->
+                    <div class="modal fade bs-modal-adduser" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <form id="add_user_form" class="form-horizontal form-label-left">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+                                        <h4 class="modal-title">添加用户</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div id="add_user">
+                                            <div class="form-group">
+                                                <label class="control-label col-md-3 col-sm-3 col-xs-12">昵称<span class="required">*</span></label>
+                                                <div class="col-md-9 col-sm-9 col-xs-12">
+                                                    <input id="add_user_nick" type="text" class="form-control" required="required" placeholder="昵称">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label col-md-3 col-sm-3 col-xs-12">电话号码<span class="required">*</span></label>
+                                                <div class="col-md-9 col-sm-9 col-xs-12">
+                                                    <input id="add_user_mobile" type="text" class="form-control" required="required" placeholder="电话号码">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label col-md-3 col-sm-3 col-xs-12">电子邮箱<span class="required">*</span></label>
+                                                <div class="col-md-9 col-sm-9 col-xs-12">
+                                                    <input id="add_user_email" type="text" class="form-control" required="required" placeholder="电子邮箱">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label col-md-3 col-sm-3 col-xs-12">初始密码<span class="required">*</span></label>
+                                                <div class="col-md-9 col-sm-9 col-xs-12">
+                                                    <input id="add_user_password" type="text" class="form-control" required="required" value="password123" placeholder="初始密码">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label col-md-3 col-sm-3 col-xs-12">用户角色<span class="required">*</span></label>
+                                                <div class="col-md-9 col-sm-9 col-xs-12">
+                                                    <select id="add_user_role" class="form-control" required="required">
+                                                        <option value="">选择角色...</option>
+                                                        <option value="manager">管理员</option>
+                                                        <option value="client">普通用户</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="control-label col-md-3 col-sm-3 col-xs-12">是否启用<span class="required">*</span></label>
+                                                <div class="col-md-9 col-sm-9 col-xs-12">
+                                                    <div class="checkbox">
+                                                        <input id="add_user_enable" type="checkbox" class="flat" checked="checked">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                        <button type="submit" class="btn btn-primary">确认</button>
+                                    </div>
+                                    <script type="text/javascript">
+                                        $('#add_user_form').submit(function () {
+                                            adduser();
+                                            return false;
+                                        })
+
+                                        function adduser () {
+                                            
+                                            if (typeof(adduserissubmit) == 'undefined' || !adduserissubmit) {
+                                                var param = {};
+
+                                                param.nick = $('#add_user_nick').val();
+                                                param.mobile = $('#add_user_mobile').val();
+                                                param.email = $('#add_user_email').val();
+                                                param.password = $('#add_user_password').val();
+                                                param.enable = $('#add_user_enable').is(':checked') ? 1 : 0;
+                                                param.role = $('#add_user_role').val();
+
+                                                $.ajax({
+                                                    type: "POST",
+                                                    url: "{{ url_for('manager.adduser') }}",
+                                                    cache: false,  
+                                                    data: param, 
+                                                    dataType: "json",
+                                                    beforeSend: function () {
+                                                        adduserissubmit = true;
+                                                    },
+                                                    success: function (result) {
+                                                        if (result && result.code == 200) {
+                                                            alert("添加成功");
+
+                                                            if (userdatatable) {
+                                                                userdatatable.draw(true);
+                                                            }
+                                                        }
+                                                        else {
+                                                            alert("添加失败");
+                                                        }
+                                                    },
+                                                    error: function () {
+                                                        alert("添加失败");
+                                                    },
+                                                    complete: function (result) {
+                                                        destoryadduser();
+                                                    }
+                                                });
+                                            }
+                                        }
+
+                                        function destoryadduser () {
+                                            adduserissubmit = false;
+                                            $('#add_user_nick').val('');
+                                            $('#add_user_mobile').val('');
+                                            $('#add_user_email').val('');
+                                            $('#add_user_password').val('password123');
+                                            $('#add_user_enable').prop("checked", true);
+                                            $('.bs-modal-adduser').modal('hide');
+                                        }
+                                    </script>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
             <table id="datatable-responsive" class="table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
@@ -47,58 +172,75 @@
                         <th>昵称</th>
                         <th>电话号码</th>
                         <th>电子邮件</th>
+                        <th>角色</th>
                         <th>状态</th>
                         <th>创建时间</th>
+                        <th>操作</th>
                     </tr>
                 </thead>
-                <!--
-                <tbody>
-                    <tr>
-                      <td>Tiger</td>
-                      <td>Nixon</td>
-                      <td>System Architect</td>
-                      <td>Edinburgh</td>
-                      <td>61</td>
-                      <td>2011/04/25</td>
-                      <td>$320,800</td>
-                      <td>5421</td>
-                      <td>t.nixon@datatables.net</td>
-                    </tr>
-                    <tr>
-                      <td>Donna</td>
-                      <td>Snider</td>
-                      <td>Customer Support</td>
-                      <td>New York</td>
-                      <td>27</td>
-                      <td>2011/01/25</td>
-                      <td>$112,000</td>
-                      <td>4226</td>
-                      <td>d.snider@datatables.net</td>
-                    </tr>
-                </tbody>
-                -->
             </table>
         </div>
         <script type="text/javascript">
-            $('#datatable-responsive').DataTable({
+            userdatatable = $('#datatable-responsive').DataTable({
                 "columns": [
                     { "data": "nick" },
                     { "data": "moblie" },
                     { "data": "email" },
+                    { "data": "role" },
                     { "data": "status" },
-                    { "data": "createtime" }
+                    { "data": "createtime" },
+                    { "data": "uuid" }
+                ],
+                "columnDefs": [
+                    {
+                        "targets": -1,
+                        "render": function (data, type, full, meta) {
+
+                            
+
+                            var statustxt = full.status == '启用' ? '禁用' : '启用'
+                            var statusval = full.status == '启用' ? '0' : '1'
+
+                            var roletxt = full.role == '管理员' ? '设为用户&nbsp;&nbsp;&nbsp;&nbsp;' : '设为管理员'
+                            var roleval = full.role == '管理员' ? 'client' : 'manager'
+
+                            var editstatus = "<a class='row_operation row_editstatus' setval='" + statusval + "' uid='" + data + "'>" + statustxt + "</a>"
+                            var editrole = "<a class='row_operation row_editrole' setval='" + roleval + "' uid='" + data + "'>" + roletxt + "</a>"
+                            var del = "<a class='row_operation row_del' uid='" + data + "'>删除</a>";
+
+                            return editstatus + '&nbsp;&nbsp;&nbsp;&nbsp;' + editrole + '&nbsp;&nbsp;&nbsp;&nbsp;' + del;
+                        }
+                    },
+                    {
+                        "targets": -2,
+                        "render": function (data, type, full, meta) {
+
+                            data = Date.parse(data);
+                            var mon = "00" + (data.getMonth() + 1);
+                            mon = mon.substr(mon.length - 2);
+
+                            var day = "00" + data.getDate();
+                            day = day.substr(day.length - 2);
+
+                            var hour = "00" + data.getHours();
+                            hour = hour.substr(hour.length - 2);
+
+                            var min = "00" + data.getMinutes();
+                            min = min.substr(min.length - 2);
+
+                            return data.getFullYear() + "-" + mon + "-" + day + " " + hour + ":" + min;
+                        }
+                    }
                 ],
                 "serverSide": true,
+                dom: "ftp",
                 "ajax": function (data, callback, settings) {
-                    
                     var param = {};
                     param.limit = data.length;
                     param.start = data.start;
                     param.page = (data.start / data.length) + 1;
                     param.draw = data.draw;
                     param.keyword = data.search.value;
-                    console.log(data);
-
                     
                     $.ajax({
                         type: "POST",
@@ -115,22 +257,6 @@
                                 returnData.data = result.data;//返回的数据列表
                                 callback(returnData)
                             }
-                            
-                            //setTimeout仅为测试延迟效果
-                            /*
-                            setTimeout(function () {
-                                //封装返回数据
-                                var returnData = {};
-                                returnData.draw = data.draw;//这里直接自行返回了draw计数器,应该由后台返回
-                                returnData.recordsTotal = result.total;//返回数据全部记录
-                                returnData.recordsFiltered = result.total;//后台不实现过滤功能，每次查询均视作全部结果
-                                returnData.data = result.data;//返回的数据列表
-                                //console.log(returnData);
-                                //调用DataTables提供的callback方法，代表数据已封装完成并传回DataTables进行渲染
-                                //此时的数据需确保正确无误，异常判断应在执行此回调前自行处理完毕
-                                callback(returnData);
-                            }, 200);
-                            */  
                         }
                     });
                 },
@@ -160,6 +286,102 @@
                     }
                 }
             });
+
+            $('#datatable-responsive').on("click", ".row_del", function () {
+
+
+                if (confirm('确定删除么,删除后将不可恢复')) {
+                    var param = {};
+                    param.uuid = $(this).attr('uid');
+
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ url_for('manager.deluser') }}",
+                        cache: false,  
+                        data: param, 
+                        dataType: "json",
+                        success: function (result) {
+                            if (result && result.code == 200) {
+                                alert("删除成功");
+
+                                if (userdatatable) {
+                                    userdatatable.draw(true);
+                                }
+                            }
+                            else {
+                                alert("删除失败");
+                            }
+                        },
+                        error: function () {
+                            alert("删除失败");
+                        }
+                    });
+                }
+                
+            });
+
+            $('#datatable-responsive').on("click", ".row_editstatus", function () {
+
+                var param = {};
+                param.uuid = $(this).attr('uid');
+                param.enable = $(this).attr('setval');
+
+                $.ajax({
+                    type: "POST",
+                    url: "{{ url_for('manager.edituser') }}",
+                    cache: false,  
+                    data: param, 
+                    dataType: "json",
+                    success: function (result) {
+                        if (result && result.code == 200) {
+                            alert("修改成功");
+
+                            if (userdatatable) {
+                                userdatatable.draw(true);
+                            }
+                        }
+                        else {
+                            alert("修改失败");
+                        }
+                    },
+                    error: function () {
+                        alert("修改失败");
+                    }
+                });
+                                
+            });
+
+            $('#datatable-responsive').on("click", ".row_editrole", function () {
+
+                var param = {};
+                param.uuid = $(this).attr('uid');
+                param.role = $(this).attr('setval');
+
+                $.ajax({
+                    type: "POST",
+                    url: "{{ url_for('manager.edituser') }}",
+                    cache: false,  
+                    data: param, 
+                    dataType: "json",
+                    success: function (result) {
+                        if (result && result.code == 200) {
+                            alert("修改成功");
+
+                            if (userdatatable) {
+                                userdatatable.draw(true);
+                            }
+                        }
+                        else {
+                            alert("修改失败");
+                        }
+                    },
+                    error: function () {
+                        alert("修改失败");
+                    }
+                });
+                                
+            });
+
         </script>
     </div>
 </div>

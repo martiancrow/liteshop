@@ -1433,11 +1433,13 @@ td.details {
 .example_alt_pagination div.dataTables_info {
     width: 40%
 }
+/*
 .paging_full_numbers {
     width: 400px;
     height: 22px;
     line-height: 22px
 }
+*/
 .paging_full_numbers a:active {
     outline: none
 }

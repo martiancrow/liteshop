@@ -58,6 +58,10 @@
     -webkit-animation: circle 1.0s infinite linear;
 }
 
+.row_operation {
+    cursor: pointer;
+}
+
 @keyframes circle {
     0%{ transform:rotate(0deg); }
     100%{ transform:rotate(360deg); }
