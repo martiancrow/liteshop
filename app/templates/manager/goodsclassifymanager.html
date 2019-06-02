@@ -1,0 +1,298 @@
+{% extends "manager/base_manager.html" %}
+
+{% block styles %}
+{{ super() }}
+<link href="{{ url_for('static', filename='vendors/datatables.net-bs/css/dataTables.bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='vendors/switchery/dist/switchery.min.css') }} rel="stylesheet">
+{% endblock %}
+
+{% block libscripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='vendors/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/datatables.net-bs/js/dataTables.bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/datatables.net-buttons/js/buttons.flash.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/datatables.net-buttons/js/buttons.html5.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/datatables.net-buttons/js/buttons.print.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/datatables.net-keytable/js/dataTables.keyTable.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/datatables.net-scroller/js/dataTables.scroller.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/jszip/dist/jszip.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/pdfmake/build/pdfmake.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/pdfmake/build/vfs_fonts.js') }}"></script>
+<script src="{{ url_for('static', filename='vendors/switchery/dist/switchery.min.js') }}"></script>
+{% endblock %}
+
+{% block page_content %}
+<input id="pid" type="hidden" value="{{ pid }}"/>
+<div class="col-md-12 col-sm-12 col-xs-12">
+    <div class="x_panel">
+        <div class="x_title">
+            <h2>商品分类<small>列表</small></h2>
+            <div class="clearfix"></div>
+        </div>
+        <div class="x_content">
+            <div class="row">
+                <div class="col-xs-12">
+                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target=".bs-modal-editclassify">添加分类</button>
+                    <button id="backrootcls" type="button" class="btn btn-info btn-sm">返回根分类</button>
+                    <!-- editclassift modal -->
+                    <div class="modal fade bs-modal-editclassify" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <input id="edittype" type="hidden" value="add"/>
+                                <input id="editid" type="hidden" value=""/>
+                                <form id="edit_classify_form" class="form-horizontal form-label-left">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+                                        <h4 class="modal-title">添加分类</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div id="edit_classify">
+                                            <div class="form-group">
+                                                <label class="control-label col-md-3 col-sm-3 col-xs-12">分类名称<span class="required">*</span></label>
+                                                <div class="col-md-9 col-sm-9 col-xs-12">
+                                                    <input id="edit_classify_name" type="text" class="form-control" required="required" placeholder="分类名称">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                        <button type="submit" class="btn btn-primary">确认</button>
+                                    </div>
+                                    <script type="text/javascript">
+
+                                        $('#edit_classify_form').submit(function () {
+
+                                            if ($('#edittype').val() == 'edit') {
+                                                editclassify("edit", $('#editid').val());
+                                            }
+                                            else {
+                                                editclassify();
+                                            }
+                                            
+                                            $('#edittype').val('add');
+                                            $('#editid').val('')
+                                            
+                                            return false;
+                                        })
+
+                                        function editclassify (type = 'add', uuid) {
+
+                                            var suburl = "{{ url_for('manager.addgoodsclassify') }}"
+
+                                            if (type == 'edit') {
+                                                suburl = "{{ url_for('manager.editgoodsclassify') }}"
+                                            }
+
+                                            if (typeof(editclassiftissubmit) == 'undefined' || !editclassiftissubmit) {
+                                                var param = {};
+
+                                                param.name = $('#edit_classify_name').val();
+                                                param.pid = $('#pid').val();
+
+                                                if (type == 'edit' && uuid) {
+                                                    param.uuid = uuid;
+                                                }
+                                                
+                                                $.ajax({
+                                                    type: "POST",
+                                                    url: suburl,
+                                                    cache: false,  
+                                                    data: param, 
+                                                    dataType: "json",
+                                                    beforeSend: function () {
+                                                        editclassiftissubmit = true;
+                                                    },
+                                                    success: function (result) {
+                                                        if (result && result.code == 200) {
+                                                            alert("操作成功");
+
+                                                            if (datatable) {
+                                                                datatable.draw(true);
+                                                            }
+                                                        }
+                                                        else {
+                                                            alert("操作失败");
+                                                        }
+                                                    },
+                                                    error: function () {
+                                                        alert("操作失败");
+                                                    },
+                                                    complete: function (result) {
+                                                        destoryeditclassify();
+                                                    }
+                                                });
+                                            }
+                                        }
+
+                                        function destoryeditclassify () {
+                                            editclassiftissubmit = false;
+                                            $('#edit_user_name').val('');
+                                            $('.bs-modal-editclassify').modal('hide');
+                                        }
+                                    </script>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <table id="datatable-responsive" class="table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
+                <thead>
+                    <tr>
+                        <th>分类名称</th>
+                        <th>子分类</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <script type="text/javascript">
+            datatable = $('#datatable-responsive').DataTable({
+                "columns": [
+                    { "data": "name" },
+                    { "data": "uuid" },
+                    { "data": "uuid" }
+                ],
+                "columnDefs": [
+                    {
+                        "targets": -1,
+                        "render": function (data, type, full, meta) {
+
+                            var editname = "<a class='row_operation row_edit' itemname='" + full.name + "' uid='" + data + "'>" + "编辑" + "</a>"
+                            var del = "<a class='row_operation row_del' uid='" + data + "'>删除</a>";
+
+                            return editname + '&nbsp;&nbsp;&nbsp;&nbsp;' + del;
+                        }
+                    },
+                    {
+                        "targets": -2,
+                        "render": function (data, type, full, meta) {
+
+                            var childlist = "<a href='{{ url_for('manager.goodsclassifymanager') }}/" + data + "' uid='" + data + "'>" + "查看子分类" + "</a>"
+
+                            return childlist;
+                        }
+                    }
+                ],
+                "serverSide": true,
+                dom: "ftp",
+                "ajax": function (data, callback, settings) {
+                    var param = {};
+                    param.limit = data.length;
+                    param.start = data.start;
+                    param.page = (data.start / data.length) + 1;
+                    param.draw = data.draw;
+                    param.keyword = data.search.value;
+                    
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ url_for('manager.getgoodsclassify') }}/" + $('#pid').val(),
+                        cache: false,  
+                        data: param,  
+                        dataType: "json",
+                        success: function (result) {
+                            if (result && result.code == 200) {
+                                var returnData = {};
+                                returnData.draw = result.draw;
+                                returnData.recordsTotal = result.total;
+                                returnData.recordsFiltered = result.total;
+                                returnData.data = result.data;
+                                callback(returnData)
+                            }
+                        }
+                    });
+                },
+                ordering:  false,
+                language: {
+                    "sProcessing": "处理中...",
+                    "sLengthMenu": "显示 _MENU_ 项结果",
+                    "sZeroRecords": "没有匹配结果",
+                    "sInfo": "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+                    "sInfoEmpty": "显示第 0 至 0 项结果，共 0 项",
+                    "sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+                    "sInfoPostFix": "",
+                    "sSearch": "搜索:",
+                    "sUrl": "",
+                    "sEmptyTable": "表中数据为空",
+                    "sLoadingRecords": "载入中...",
+                    "sInfoThousands": ",",
+                    "oPaginate": {
+                        "sFirst": "首页",
+                        "sPrevious": "上页",
+                        "sNext": "下页",
+                        "sLast": "末页"
+                    },
+                    "oAria": {
+                        "sSortAscending": ": 以升序排列此列",
+                        "sSortDescending": ": 以降序排列此列"
+                    }
+                }
+            });
+
+            $('#datatable-responsive').on("click", ".row_del", function () {
+
+
+                if (confirm('确定删除么,删除后将不可恢复')) {
+                    var param = {};
+                    param.uuid = $(this).attr('uid');
+
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ url_for('manager.delgoodsclassify') }}",
+                        cache: false,  
+                        data: param, 
+                        dataType: "json",
+                        success: function (result) {
+                            if (result && result.code == 200) {
+                                alert("删除成功");
+
+                                if (datatable) {
+                                    datatable.draw(true);
+                                }
+                            }
+                            else {
+                                alert("删除失败");
+                            }
+                        },
+                        error: function () {
+                            alert("删除失败");
+                        }
+                    });
+                }
+                
+            });
+
+            $('#datatable-responsive').on("click", ".row_edit", function () {
+
+                var uuid = $(this).attr('uid');
+                var name = $(this).attr('itemname');
+
+                $('#edittype').val('edit');
+                $('#editid').val(uuid);
+                $('#edit_classify_name').val(name);
+
+                $('.bs-modal-editclassify').modal('show');
+           
+            });
+
+            
+
+            $('#backrootcls').bind('click', function () {
+                window.location.href = "{{ url_for('manager.goodsclassifymanager') }}"
+            });
+
+        </script>
+    </div>
+</div>
+{% endblock page_content %}
