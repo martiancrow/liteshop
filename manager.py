@@ -6,10 +6,12 @@ import app.models.ua_models
 import app.models.goods_models
 import app.models.shop_models
 import app.models.store_models
+import app.models.utility_models
 from app import create_app, db
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
 from app.models.ua_models import ua_user
+from app.models.utility_models import utility_uuid_seed
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 manager = Manager(app)
@@ -34,6 +36,11 @@ def addtestuser():
 	"""Auto add test data"""
 	#User.generate_fake()
 	ua_user.generate_fake()
+
+@manager.command
+def adduuidseed():
+	"""Auto add seed data"""
+	utility_uuid_seed.generate_data(prefix='100', suffix='22')
 
 
 if __name__ == "__main__":

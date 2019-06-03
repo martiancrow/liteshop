@@ -52,7 +52,14 @@ def goodsclassifymanager(puuid='0'):
     if current_user.user.ua_user_headimg and current_user.user.ua_user_headimg != '':
         headimgurl = current_user.user.ua_user_headimg
 
-    return render_template('manager/goodsclassifymanager.html', headimgurl=headimgurl, pid=puuid)
+    ppuuid = '0'
+
+    ppclassify = store_goods_classify.query.filter(store_goods_classify.store_goods_classify_uuid == puuid).first()
+
+    if ppclassify:
+        ppuuid = ppclassify.store_goods_classify_puuid
+
+    return render_template('manager/goodsclassifymanager.html', headimgurl=headimgurl, pid=puuid, ppid=ppuuid)
 
 @manager.route('/usermanager', methods=['GET'])
 @manager_required

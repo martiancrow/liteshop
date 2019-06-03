@@ -12,6 +12,7 @@ from sqlalchemy.dialects.mysql import VARBINARY
 from .. import db, login_manager
 from sqlalchemy.sql import func
 from .shop_models import shop_user
+from .utility_models import utility_uuid_seed
 
 COOKIE_NAME = 'remember_token'
 AUTH_HEADER_NAME = 'Authorization'
@@ -48,12 +49,19 @@ class ua_user(db.Model):
 
         if self.ua_user_uuid is None:
 
-            while True:
-                self.ua_user_uuid = str(uuid.uuid5(uuid.NAMESPACE_URL, str(uuid.uuid1())))
-                checkuuid = ua_user.query.filter_by(ua_user_uuid=self.ua_user_uuid).first()
+            us = utility_uuid_seed.query.first()
 
-                if checkuuid == None:
-                    break
+            if us:
+                self.ua_user_uuid = str(uuid.uuid5(uuid.uuid1(), us.utility_uuid_seed_value))
+                db.session.delete(us)
+                db.session.commit()
+            else:
+                while True:
+                    self.ua_user_uuid = str(uuid.uuid5(uuid.NAMESPACE_URL, str(uuid.uuid1())))
+                    checkuuid = ua_user.query.filter_by(ua_user_uuid=self.ua_user_uuid).first()
+
+                    if checkuuid == None:
+                        break
 
     @property
     def password(self):
