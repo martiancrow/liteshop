@@ -1,0 +1,54 @@
+{% extends "user/base.html" %}
+
+{% block title %}Liteshop{% endblock title %}
+
+{% block body_attribs %} class="login"{% endblock %}
+
+
+{% block content %}
+
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning" style="margin: 6px 6px;position: relative;z-index: 99;">
+    <button type="button" class="close" data-dismiss="alert" style="position: absolute;top: 50%;margin-top: -10.5px;right: 15px;">&times;</button>
+    {{ message }}
+</div>
+{% endfor %}
+
+
+<div>
+    <div class="login_wrapper">
+        <div class="animate form login_form">
+            <section class="login_content">
+                <form action="{{ url_for('user.login') }}" method="post">
+                    {{form.csrf_token}}
+                    <h1>用户登录</h1>
+                    <div>
+                        <input type="text" class="form-control" name="email" value="" placeholder="用户名/电子邮箱"/>
+                    </div>
+                    <div>
+                        <input type="password" class="form-control" name="password" value="" placeholder="密码"/>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-default submit">登录</button>
+                    </div>
+
+                    <div class="clearfix"></div>
+
+                    <div class="separator">
+
+                        <div class="clearfix"></div>
+                        <br />
+
+                        <div>
+                            <h1><i class="fa fa-paw"></i> LiteShop</h1>
+                            <p>©2019 All Rights Reserved.</p>
+                        </div>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

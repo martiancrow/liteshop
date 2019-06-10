@@ -1,0 +1,59 @@
+[33mcommit 02f51fab5734fe51b6cfec1aac9ecdbf048a6c1c[m[33m ([m[1;36mHEAD -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m)[m
+Author: martiancrow <187057727@qq.com>
+Date:   Tue Jun 4 02:10:36 2019 +0800
+
+    add uuid seed
+
+[33mcommit dfe107a5e04d92d29d07f77b7f0e59f36a6abb27[m
+Author: martiancrow <187057727@qq.com>
+Date:   Mon Jun 3 00:00:15 2019 +0800
+
+    add classifymanager templates
+
+[33mcommit 808df73baa58894587b24902352dac34cfc0865c[m
+Author: martiancrow <187057727@qq.com>
+Date:   Sun Jun 2 23:59:18 2019 +0800
+
+    add store classify function & UI
+
+[33mcommit 752fec61607a12df8a132e4825fcfc81c55553be[m
+Author: martiancrow <187057727@qq.com>
+Date:   Mon May 27 01:01:06 2019 +0800
+
+    add templates file and database file
+
+[33mcommit 75bdd7684ae9a363fef1fa737fa27f272f1e23fe[m
+Author: martiancrow <187057727@qq.com>
+Date:   Mon May 27 01:00:01 2019 +0800
+
+    add update function
+
+[33mcommit a80a51cde5f4dee65c7d7cf1b610b1bd529f7a67[m[33m ([m[1;31morigin/master[m[33m, [m[1;32mmaster[m[33m)[m
+Author: martiancrow <187057727@qq.com>
+Date:   Sun May 5 19:40:44 2019 +0800
+
+    add gitignore config file
+
+[33mcommit 0c6a15c07ae2352bd1b533254271ac91a0bc4a98[m
+Author: martiancrow <187057727@qq.com>
+Date:   Sun May 5 19:37:41 2019 +0800
+
+    remove requirements
+
+[33mcommit c8907af178efcd45d1a2d8d6d25c38a0996daaa2[m
+Author: martiancrow <187057727@qq.com>
+Date:   Sun May 5 19:35:25 2019 +0800
+
+    test git
+
+[33mcommit 5134c014e4fa6e841866a7e3afddb557da1a326b[m
+Author: martiancrow <187057727@qq.com>
+Date:   Sun May 5 19:32:04 2019 +0800
+
+    test git
+
+[33mcommit f6c3b948d137fb62b58086964a5ea5f9fa59fd00[m
+Author: martiancrow <187057727@qq.com>
+Date:   Sun May 5 19:02:44 2019 +0800
+
+    init project

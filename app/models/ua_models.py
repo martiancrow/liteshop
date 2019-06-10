@@ -43,6 +43,7 @@ class ua_user(db.Model):
     ref_ua_user_credit_detail = db.relationship('ua_user_credit_detail', backref='ua_user', lazy='dynamic', cascade="all, delete-orphan")
     ref_ua_user_account_detail = db.relationship('ua_user_account_detail', backref='ua_user', lazy='dynamic', cascade="all, delete-orphan")
     ref_shop_user = db.relationship('shop_user', backref='ua_user', lazy='dynamic', cascade="all, delete-orphan")
+    ref_owned_shop_basic = db.relationship('shop_basic', backref='owned_user', lazy='dynamic', cascade="all, delete-orphan")
     
     def __init__(self, **kwargs):
         super(ua_user, self).__init__(**kwargs)

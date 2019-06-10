@@ -54,6 +54,9 @@ def create_app(config_name):
 
     from .manager import manager as manager_blueprint
     app.register_blueprint(manager_blueprint, url_prefix='/manager')
+
+    from .user import user as user_blueprint
+    app.register_blueprint(user_blueprint, url_prefix='/user')
     
     
     return app

@@ -1,10 +1,10 @@
-{% extends "manager/base.html" %}
+{% extends "user/base.html" %}
 
 {% block title %}Liteshop Manager{% endblock %}
 
 {% block styles %}
 {{ super() }}
-<link href="{{ url_for('static', filename='css/manager.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/user.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block body_attribs %} class="nav-md"{% endblock %}
@@ -17,7 +17,7 @@
 		<div class="col-md-3 left_col menu_fixed">
 			<div class="left_col scroll-view">
 				<div class="navbar nav_title" style="border: 0;">
-		    		<a href="index.html" class="site_title"><i class="fa fa-paw"></i> <span>物管界面</span></a>
+		    		<a href="index.html" class="site_title"><i class="fa fa-paw"></i> <span>店铺管理</span></a>
 		    	</div>
 
 		    	<div class="clearfix"></div>
@@ -41,19 +41,16 @@
 		    	<!-- sidebar menu -->
 		    	<div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
 		    		<div class="menu_section">
-		        		<h3>通用</h3>
+		        		<!-- <h3>通用</h3> -->
 		        		<ul class="nav side-menu">
 			          		<li>
-			          			<a href="{{ url_for('manager.index') }}"><i class="fa fa-home"></i>首页</a>
+			          			<a href="{{ url_for('user.index') }}"><i class="fa fa-home"></i>首页</a>
 			          		</li>
 							<li>
-								<a href="{{ url_for('manager.goodsclassifymanager') }}"><i class="fa fa-sitemap"></i>分类管理</a>
+								<a href="{{ url_for('manager.goodsclassifymanager') }}"><i class="fa fa-sitemap"></i>店铺分类</a>
 							</li>
 							<li>
-								<a href="{{ url_for('manager.usermanager') }}"><i class="fa fa-user"></i>用户管理</a>
-							</li>
-							<li>
-								<a href="{{ url_for('manager.shopmanager') }}"><i class="fa fa-institution"></i>店铺管理</a>
+								<a href="{{ url_for('manager.usermanager') }}"><i class="fa fa-user"></i>店铺用户</a>
 							</li>
 						</ul>
 					</div>
@@ -65,13 +62,13 @@
 		    		<a href="#" data-toggle="tooltip" data-placement="top" title="返回顶部">
 		        		<span class="glyphicon glyphicon-circle-arrow-up" aria-hidden="true"></span>
 		    		</a>
-		    		<a href="{{ url_for('manager.usersetting') }}" data-toggle="tooltip" data-placement="top" title="个人资料">
+		    		<a href="{{ url_for('user.usersetting') }}" data-toggle="tooltip" data-placement="top" title="个人资料">
 		        		<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
 		    		</a>
-		    		<a href="{{ url_for('manager.passwordsetting') }}" data-toggle="tooltip" data-placement="top" title="修改密码">
+		    		<a href="{{ url_for('user.passwordsetting') }}" data-toggle="tooltip" data-placement="top" title="修改密码">
 		        		<span class="glyphicon glyphicon-eye-close" aria-hidden="true"></span>
 		    		</a>
-		    		<a href="{{ url_for('manager.logout') }}" data-toggle="tooltip" data-placement="top" title="注销" href="login.html">
+		    		<a href="{{ url_for('user.logout') }}" data-toggle="tooltip" data-placement="top" title="注销" href="login.html">
 		        		<span class="glyphicon glyphicon-off" aria-hidden="true"></span>
 		    		</a>
 		    	</div>
@@ -95,9 +92,9 @@
 				      		</a>
 
 				    		<ul class="dropdown-menu dropdown-usermenu pull-right">
-				    			<li><a href="{{ url_for('manager.passwordsetting') }}">修改密码</a></li>
-				        		<li><a href="{{ url_for('manager.usersetting') }}">个人资料</a></li>
-				        		<li><a href="{{ url_for('manager.logout') }}"><i class="fa fa-sign-out pull-right"></i>注销</a></li>
+				    			<li><a href="{{ url_for('user.passwordsetting') }}">修改密码</a></li>
+				        		<li><a href="{{ url_for('user.usersetting') }}">个人资料</a></li>
+				        		<li><a href="{{ url_for('user.logout') }}"><i class="fa fa-sign-out pull-right"></i>注销</a></li>
 				    		</ul>
 				    	</li>
 					</ul>
@@ -121,7 +118,7 @@
 		{% block footer %}
 		<footer>
 		    <div class="pull-right">
-		        Liteshop Manager
+		        Shop User
 		    </div>
 		    <div class="clearfix"></div>
 		</footer>

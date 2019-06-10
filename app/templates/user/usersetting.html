@@ -1,0 +1,241 @@
+{% extends "user/base_user.html" %}
+
+{% block page_content %}
+<div class="col-md-12 col-sm-12 col-xs-12">
+	<div class="x_panel">
+		<div class="x_title">
+			<h2>个人资料 <small>设置与修改</small></h2>
+            <div class="clearfix"></div>
+        </div>
+        <div class="x_content">
+        	<br />
+        	<div id="setting-top">
+        		<div id="headimg-group" class="col-md-3 col-sm-3 col-xs-6">
+	            	<img class="img-responsive avatar-view" src="{{ headimgurl }}" alt="">
+	            	<button id="updateheadimg" type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target=".bs-modal-update-headimg">修改头像</button>
+	            	<!-- modals -->
+                  	<div class="modal fade bs-modal-update-headimg" tabindex="-1" role="dialog" aria-hidden="true">
+                    	<div class="modal-dialog modal-lg">
+                      		<div class="modal-content">
+
+                        		<div class="modal-header">
+                          			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span></button>
+                          			<h4 class="modal-title">修改头像</h4>
+                        		</div>
+                        		<div class="modal-body">
+		                        	<div id="upload_zone">
+                                        <div class="uz-message">
+                                            <span>点击或拖动文件到此区域</span>
+                                        </div>
+                                        <input id="file_headimg_upload" accept="image/*" type="file" title=""/>
+                                    </div>
+                                    <div id="cropper_box">
+                                        
+                                    </div>
+                                    <div id="upload_progress">
+                                        <div class="up-message">
+                                            <span class="glyphicon glyphicon-repeat" aria-hidden="true"></span>
+                                            <span style="font-size: 18px;">上传中...</span>
+                                        </div>
+                                    </div>
+                                    
+                        		</div>
+                        		<div class="modal-footer">
+                          			<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                          			<button id="cropper_confirm" type="button" class="btn btn-primary">确认</button>
+                        		</div>
+                                <script type="text/javascript">
+                                    $('#file_headimg_upload').bind('change', function () {
+                                        var obj = this;
+                                                            
+                                        if (obj.files) {
+
+                                            for (var i = 0; i < obj.files.length; i++) {
+
+                                                var fr = new FileReader();
+
+                                                fr.onload = (function (file, evt) {
+
+                                                    return function (evt) {
+
+                                                        initcropper(file, this.result)
+                                                    }
+
+                                                })(obj.files[i]);
+
+                                                fr.readAsDataURL(obj.files[i]);
+                                            }
+
+                                        }
+
+                                    });
+
+                                    function initcropper (file, base64code) {
+                                        $("#upload_zone").hide();
+                                        $("#cropper_box").show();
+
+                                        var img = new Image();
+
+                                        img.onload = function () {
+                                            $("#cropper_box").append(img);
+
+                                            $cropperimg = $('#cropper_box img')
+
+                                            $cropperimg.cropper({
+                                                aspectRatio: 1 / 1,
+                                                viewMode: 1,
+                                                autoCropArea: 1,
+                                                crop: function (e) {
+                                                    //console.log(e);
+                                                }
+                                            });
+                                        };
+
+                                        img.src = base64code;
+
+                                    }
+
+                                    $('#cropper_confirm').bind('click', function () {
+
+                                        if (typeof(issubmit) == 'undefined' || !issubmit) {
+
+                                            if ($cropperimg) {
+
+                                                var data = $cropperimg.cropper('getCroppedCanvas');
+
+                                                data.toBlob(function (blob) {
+                                                    $('#cropper_box').hide();
+                                                    $('#upload_progress').show();
+                                                    issubmit = true;
+                                                    upload_file(blob)
+
+                                                });
+                                            }
+
+                                        }
+
+                                    });
+
+                                    function upload_file(blob) {
+
+                                        var xhr = new XMLHttpRequest();
+
+                                        xhr.upload.addEventListener('progress', function(evt) {
+                                            if (evt.lengthComputable) {
+                                                var percentComplete = parseInt(evt.loaded / evt.total * 100);
+                                            }
+
+                                        }, false);
+
+                                        xhr.addEventListener('load', function(evt) {
+
+                                            if (evt.currentTarget.status == 200) {
+
+                                                var result = $.parseJSON(evt.currentTarget.responseText);
+
+                                                if (result.code == 200) {
+                                                    var img = new Image();
+
+                                                    img.onload = function () {
+                                                        $('#headimg-group img').attr('src', this.src);
+                                                        $('nav .user-profile img').attr('src', this.src);
+                                                    };
+
+                                                    img.src = result.url;
+                                                }
+
+
+                                                
+
+                                                
+                                            }
+
+                                            destoryuploadheadimg();
+                                            
+                                        }, false);
+
+                                        xhr.addEventListener('error', function (evt) {
+
+                                            destoryuploadheadimg();
+                                            
+                                        }, false);
+
+                                        xhr.addEventListener('abort', function () {
+
+                                            destoryuploadheadimg();
+                                            
+                                        }, false);
+
+                                        // 开始上传
+                                        xhr.open('POST', '/user/uploadheadimage', true);
+                                        xhr.send(blob);  
+                                        
+                                    }
+
+                                    function destoryuploadheadimg () {
+
+                                        $('#file_headimg_upload').val('');
+                                        $('#cropper_box img').cropper('destroy');
+                                        $("#cropper_box").empty();
+
+                                        $("#upload_zone").show();
+                                        $("#cropper_box").hide();
+                                        $("#upload_progress").hide();
+                                        $('.bs-modal-update-headimg').modal('hide');
+
+                                        $cropperimg = null;
+                                        issubmit = false;
+
+                                    }
+
+                                    /*
+                                    $('.bs-modal-update-headimg').on('hidden.bs.modal', function () {
+                                        $('.bs-modal-update-headimg-preview').modal('show')
+                                    })
+                                    */
+                                </script>
+
+                    		</div>
+                    	</div>
+                	</div>
+	            </div>
+            </div>
+            <div class="ln_solid"></div>
+        	<form id="setting-form" data-parsley-validate class="form-horizontal form-label-left" action="{{ url_for('user.usersetting') }}" method="post">
+        		{{form.csrf_token}}
+            	<div class="form-group">
+                	<label class="control-label col-md-1 col-sm-1 col-xs-12" for="user_email">邮箱<span class="required">*</span></label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                    	<input type="text" name="email" id="user_email" value="{{ current_user.user.ua_user_email }}" required="required" class="form-control col-md-7 col-xs-12">
+                    </div>
+                </div>
+                <div class="form-group">
+                	<label class="control-label col-md-1 col-sm-1 col-xs-12" for="user_mobile">手机<span class="required">*</span></label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                    	<input type="text" name="mobile" id="user_mobile" value="{{ current_user.user.ua_user_moblie }}" required="required" class="form-control col-md-7 col-xs-12">
+                    </div>
+                </div>
+                <div class="form-group">
+                	<label class="control-label col-md-1 col-sm-1 col-xs-12" for="user_nick">昵称<span class="required">*</span></label>
+                    <div class="col-md-10 col-sm-10 col-xs-12">
+                    	<input type="text" name="nick" id="user_nick" value="{{ current_user.user.ua_user_nick }}" required="required" class="form-control col-md-7 col-xs-12">
+                    </div>
+                </div>
+                <div class="ln_solid"></div>
+                <div class="form-group">
+                	<div class="col-md-12 col-sm-12 col-xs-12">
+                		<button class="btn btn-primary" type="button" onclick="cancel()">取消</button>
+                		<script type="text/javascript">
+                			function cancel () {
+                				window.location.href = "{{url_for('user.index')}}"
+                			}
+                		</script>
+                		<button type="submit" class="btn btn-success">提交</button>
+                	</div>
+            	</div>
+
+        	</form>
+    	</div>
+	</div>
+</div>
+{% endblock page_content %}

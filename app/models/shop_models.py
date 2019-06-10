@@ -1,4 +1,5 @@
 import time
+import uuid
 import base64
 import struct
 import bleach
@@ -16,8 +17,10 @@ from .goods_models import goods_basis
 # 1 is true 0 is false
 # frist 4 bit for user ADUS
 # secend 4 bit for goods ADUS
+# third 4 bit for order ADUS
+# fourth 4 bit for reserve
 class ShopPremission:
-    MANAGER = 0xff
+    MANAGER = 0xffff
 
 class shop_goods_classify(db.Model):
     __tablename__ = 'shop_goods_classify'
@@ -53,9 +56,11 @@ class shop_user(db.Model):
 
 class shop_basic(db.Model):
     __tablename__ = 'shop_basic'
+    shop_owned_user_uuid = db.Column(db.String(128), db.ForeignKey('ua_users.ua_user_uuid'), default='')
     shop_basic_id = db.Column(db.Integer, primary_key=True)
     shop_basic_uuid = db.Column(db.String(128), unique=True, index=True)
     shop_basic_type = db.Column(db.Integer, default=0)
+    shop_basic_status = db.Column(db.Integer, default=0) # 0:disenbale 1:enable
     shop_basic_name = db.Column(db.String(128))
     shop_basic_logo_url = db.Column(db.String(256))
     shop_basic_mobile_head_image_url = db.Column(db.String(256))
@@ -65,7 +70,7 @@ class shop_basic(db.Model):
     ref_goods_basis = db.relationship('goods_basis', backref='shop_basic', lazy='dynamic', cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
-        super(ua_user, self).__init__(**kwargs)
+        super(shop_basic, self).__init__(**kwargs)
 
         if self.shop_basic_uuid is None:
 

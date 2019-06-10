@@ -7,42 +7,178 @@ from datetime import datetime, timedelta
 from flask import jsonify, render_template, redirect, url_for, abort, flash, request, current_app, make_response, Response
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_moment import Moment
-from . import manager
+from . import user
 from .forms import LoginForm, UserSettingForm, PasswordSettingForm
 from .. import db
 from ..models.ua_models import ua_user, User, SystemRole
-from ..models.store_models import store_goods_classify
-from ..models.shop_models import shop_basic, shop_user
 
-def manager_required(f):
+def user_required(f):
 
     @wraps(f)
     def decorated_required(*args, **kargs):
 
-        if current_user.is_authenticated and current_user.user.ua_user_system_role == SystemRole.MANAGER:
+        if current_user.is_authenticated and current_user.user.ua_user_system_role == SystemRole.CLIENT:
 
             return f(*args, **kargs)
 
-        return redirect(url_for('manager.login'))
+        return redirect(url_for('user.login'))
 
     return decorated_required
 
 
-@manager.before_app_request
+@user.before_app_request
 def before_request():
     current_user
 
-@manager.route('/', methods=['GET'])
-@manager_required
+@user.route('/', methods=['GET'])
+@user_required
 def index():
 
-    headimgurl = url_for('static', filename='images/manager_blank_headimg.jpg')
+    headimgurl = url_for('static', filename='images/user_blank_headimg.png')
 
     if current_user.user.ua_user_headimg and current_user.user.ua_user_headimg != '':
         headimgurl = current_user.user.ua_user_headimg
 
-    return render_template('manager/index.html', headimgurl=headimgurl)
+    return render_template('user/index.html', headimgurl=headimgurl)
 
+@user.route('/login', methods=['GET', 'POST'])
+def login():
+
+    if not current_user.is_anonymous:
+        return redirect(url_for('user.index'))
+
+    form = LoginForm()
+
+    if form.validate_on_submit():
+
+        user = ua_user.query.filter_by(ua_user_email=form.email.data).first()
+
+        if user is not None and user.verify_password(form.password.data) and user.ua_user_system_role == SystemRole.CLIENT:
+
+            lguser = User(current_user.sess, user.ua_user_uuid)
+            login_user(lguser, True)
+
+            next = request.args.get('next')
+            if next is None or not next.startswith('/'):
+                next = url_for('user.index')
+
+            return redirect(next)
+
+        flash('账号或密码错误')
+
+    return render_template('user/login.html', form=form)
+
+@user.route('/logout')
+@user_required
+def logout():
+
+    current_user.logout()
+    logout_user()
+    current_user.clear()
+
+    flash('注销成功')
+    return redirect(url_for('user.login'))
+
+@user.route('/usersetting', methods=['GET', 'POST'])
+@user_required
+def usersetting():
+
+    form = UserSettingForm()
+
+    if form.validate_on_submit():
+
+        user = current_user.user
+        user.ua_user_email = form.email.data
+        user.ua_user_moblie = form.mobile.data
+        user.ua_user_nick = form.nick.data
+
+        db.session.add(user)
+        db.session.commit()
+
+        flash('更新成功')
+
+    headimgurl = url_for('static', filename='images/user_blank_headimg.png')
+    
+    if current_user.user.ua_user_headimg and current_user.user.ua_user_headimg != '':
+        headimgurl = current_user.user.ua_user_headimg
+
+    return render_template('user/usersetting.html', headimgurl=headimgurl, form=form)
+
+@user.route('/uploadheadimage', methods=['POST'])
+@user_required
+def uploadheadimg():
+
+    t = time.time()
+    t = str(int(t))
+
+    filename = current_user.user.ua_user_uuid + '_' + t
+
+    hl = hashlib.md5()
+    hl.update(filename.encode(encoding='utf-8'))
+    filename = hl.hexdigest()
+
+    
+    with open(os.path.join(current_app.root_path, 'mediafile', 'headimage', filename + ".png"), 'wb') as fp:
+        fp.write(request.data)
+
+    user = current_user.user
+    user.ua_user_headimg = url_for('user.getheadimage', filename=filename)
+
+    db.session.add(user)
+    db.session.commit()
+    
+
+    result = {
+        'code': 200,
+        'url': url_for('user.getheadimage', filename=filename)
+    }
+
+    return jsonify(result)
+
+@user.route('/getheadimage/<string:filename>', methods=['GET'])
+def getheadimage(filename):
+
+    with open(os.path.join(current_app.root_path, 'mediafile', 'headimage', filename + ".png"), 'rb') as fp:
+        data = fp.read()
+
+    response = make_response(data)
+    response.mimetype = "image/png"
+
+    return response
+
+@user.route('/passwordsetting', methods=['GET', 'POST'])
+@user_required
+def passwordsetting():
+
+    form = PasswordSettingForm()
+
+    if form.validate_on_submit():
+
+        user = current_user.user
+        
+        if user is not None and user.verify_password(form.password.data):
+
+            if form.new_password.data == form.rep_new_password.data:
+
+                user.password = form.new_password.data
+                db.session.add(user)
+                db.session.commit()
+
+                flash('更新成功')
+            else:
+                flash('密码不一致')
+        else:
+            flash('密码错误')
+
+    headimgurl = url_for('static', filename='images/user_blank_headimg.png')
+    
+    if current_user.user.ua_user_headimg and current_user.user.ua_user_headimg != '':
+        headimgurl = current_user.user.ua_user_headimg
+
+    return render_template('user/passwordsetting.html', headimgurl=headimgurl, form=form)
+
+
+'''
 @manager.route('/goodsclassifymanager', methods=['GET'])
 @manager.route('/goodsclassifymanager/<string:puuid>', methods=['GET'])
 @manager_required
@@ -73,143 +209,11 @@ def usermanager():
 
     return render_template('manager/usermanager.html', headimgurl=headimgurl)
 
-@manager.route('/shopmanager', methods=['GET'])
-@manager_required
-def shopmanager():
-
-    headimgurl = url_for('static', filename='images/manager_blank_headimg.jpg')
-    
-    if current_user.user.ua_user_headimg and current_user.user.ua_user_headimg != '':
-        headimgurl = current_user.user.ua_user_headimg
-
-    return render_template('manager/shopmanager.html', headimgurl=headimgurl)
-
-@manager.route('/usersetting', methods=['GET', 'POST'])
-@manager_required
-def usersetting():
-
-    form = UserSettingForm()
-
-    if form.validate_on_submit():
-
-        user = current_user.user
-        user.ua_user_email = form.email.data
-        user.ua_user_moblie = form.mobile.data
-        user.ua_user_nick = form.nick.data
-
-        db.session.add(user)
-        db.session.commit()
-
-        flash('更新成功')
-
-    headimgurl = url_for('static', filename='images/manager_blank_headimg.jpg')
-    
-    if current_user.user.ua_user_headimg and current_user.user.ua_user_headimg != '':
-        headimgurl = current_user.user.ua_user_headimg
-
-    return render_template('manager/usersetting.html', headimgurl=headimgurl, form=form)
-
-@manager.route('/passwordsetting', methods=['GET', 'POST'])
-@manager_required
-def passwordsetting():
-
-    form = PasswordSettingForm()
-
-    if form.validate_on_submit():
-
-        user = current_user.user
-        
-        if user is not None and user.verify_password(form.password.data):
-
-            if form.new_password.data == form.rep_new_password.data:
-
-                user.password = form.new_password.data
-                db.session.add(user)
-                db.session.commit()
-
-                flash('更新成功')
-            else:
-                flash('密码不一致')
-        else:
-            flash('密码错误')
-
-    headimgurl = url_for('static', filename='images/manager_blank_headimg.jpg')
-    
-    if current_user.user.ua_user_headimg and current_user.user.ua_user_headimg != '':
-        headimgurl = current_user.user.ua_user_headimg
-
-    return render_template('manager/passwordsetting.html', headimgurl=headimgurl, form=form)
 
 
-@manager.route('/login', methods=['GET', 'POST'])
-def login():
-
-    if not current_user.is_anonymous:
-        return redirect(url_for('manager.index'))
-
-    form = LoginForm()
-
-    if form.validate_on_submit():
-
-        user = ua_user.query.filter_by(ua_user_email=form.email.data).first()
-
-        if user is not None and user.verify_password(form.password.data) and user.ua_user_system_role == SystemRole.MANAGER:
-
-            lguser = User(current_user.sess, user.ua_user_uuid)
-            login_user(lguser, True)
-
-            next = request.args.get('next')
-            if next is None or not next.startswith('/'):
-                next = url_for('manager.index')
-
-            return redirect(next)
-
-        flash('账号或密码错误')
-
-    return render_template('manager/login.html', form=form)
 
 
-@manager.route('/logout')
-@manager_required
-def logout():
 
-    current_user.logout()
-    logout_user()
-    current_user.clear()
-
-    flash('注销成功')
-    return redirect(url_for('manager.login'))
-
-@manager.route('/uploadheadimage', methods=['POST'])
-@manager_required
-def uploadheadimg():
-
-    t = time.time()
-    t = str(int(t))
-
-    filename = current_user.user.ua_user_uuid + '_' + t
-
-    hl = hashlib.md5()
-    hl.update(filename.encode(encoding='utf-8'))
-    filename = hl.hexdigest()
-
-    
-    with open(os.path.join(current_app.root_path, 'mediafile', 'headimage', filename + ".png"), 'wb') as fp:
-        fp.write(request.data)
-
-    user = current_user.user
-    user.ua_user_headimg = url_for('manager.getheadimage', filename=filename)
-
-    db.session.add(user)
-    db.session.commit()
-    
-
-    result = {
-        'code': 200,
-        'url': url_for('manager.getheadimage', filename=filename)
-    }
-
-    return jsonify(result)
 
 @manager.route('/adduser', methods=['GET', 'POST'])
 @manager_required
@@ -465,164 +469,7 @@ def getgoodsclassify(puuid='0'):
 
     return jsonify(result)
 
-@manager.route('/addshopbasic', methods=['GET', 'POST'])
-@manager_required
-def addshopbasic():
 
-    result = {
-        'code': 500,
-    }
-
-    name = request.form['name']
-
-    if name:
-
-        shopbasic = shop_basic(
-            shop_basic_name=name)
-
-        db.session.add(shopbasic)
-        db.session.commit()
-
-        result["code"] = 200
-
-
-    return jsonify(result)
-
-@manager.route('/delshopbasic', methods=['GET', 'POST'])
-@manager_required
-def delshopbasic():
-    
-    result = {
-        'code': 500,
-    }
-
-    uuid = request.form['uuid']
-
-    if uuid:
-
-        shopbasic = shop_basic.query.filter_by(shop_basic_uuid=uuid).first()
-
-        if shopbasic:
-
-            db.session.delete(shopbasic)
-            db.session.commit()
-
-        result["code"] = 200
-
-
-    return jsonify(result)
-
-@manager.route('/editshopbasic', methods=['GET', 'POST'])
-@manager_required
-def editshopbasic():
-    
-    result = {
-        'code': 500,
-    }
-
-    uuid = request.form['uuid']
-
-    if uuid:
-
-        shopbasic = shop_basic.query.filter_by(shop_basic_uuid=uuid).first()
-
-        if shopbasic:
-
-            if 'name' in request.form:
-                shopbasic.shop_basic_name = request.form['name']
-                result["code"] = 200
-
-            if 'status' in request.form:
-                shopbasic.shop_basic_status = request.form['status']
-                result["code"] = 200
-
-            if 'token' in request.form:
-                token = request.form['token']
-                user = ua_user.query.filter(or_(ua_user.ua_user_email.like(f'%{token}%'), ua_user.ua_user_moblie.like(f'%{token}%'))).first()
-
-                if user:
-
-                    shopuser = shop_user.query.filter(and_(shop_user.ua_user_uuid == shopbasic.shop_owned_user_uuid, shop_user.shop_basic_uuid == shopbasic.shop_basic_uuid)).all()
-                    
-                    if shopuser:
-
-                        for item in shopuser:
-                            db.session.delete(item)
-                            db.session.commit()
-
-                    shopuser = shop_user(
-                            shop_basic_uuid=shopbasic.shop_basic_uuid,
-                            ua_user_uuid=user.ua_user_uuid,
-                            shop_user_title="所有者")
-
-                    db.session.add(shopuser)
-                    db.session.commit()
-
-                    shopbasic.shop_owned_user_uuid = user.ua_user_uuid
-                    
-                    result["code"] = 200
-                else:
-                    result["code"] = 500
-
-
-            db.session.add(shopbasic)
-            db.session.commit()
-
-    return jsonify(result)
-
-@manager.route('/getshopbasic', methods=['GET', 'POST'])
-@manager_required
-def getshopbasic():
-
-    limit = int(request.form['limit']) if 'limit' in request.form.keys() else 10
-    start = int(request.form['start']) if 'start' in request.form.keys() else 0
-    page = int(request.form['page']) if 'page' in request.form.keys() else 1
-    draw = int(request.form['draw']) if 'draw' in request.form.keys() else 1
-    keyword = request.form['keyword'] if 'keyword' in request.form.keys() else None
-
-    shopbasic = shop_basic.query
-
-    
-    if keyword:
-        rule = or_(shop_basic.shop_basic_name.like(f'%{keyword}%'))
-        shopbasic = shopbasic.filter(rule)
-
-
-    total = shopbasic.count()
-    shopbasic = shopbasic.order_by(shop_basic.shop_basis_createtime.asc()).limit(limit).offset(start).all()
-    shopbasiclist = []
-
-    print()
-
-    for item in shopbasic:
-        data = {
-            'name': item.shop_basic_name,
-            'owned_user': item.owned_user.ua_user_email if item.owned_user else '',
-            'status': item.shop_basic_status,
-            'uuid': item.shop_basic_uuid,
-        }
-        shopbasiclist.append(data)
-
-
-    result = {
-        'code': 200,
-        'draw': draw,
-        'total': total,
-        'data': shopbasiclist
-    }
-
-    return jsonify(result)
-
-@manager.route('/getheadimage/<string:filename>', methods=['GET'])
-def getheadimage(filename):
-
-    with open(os.path.join(current_app.root_path, 'mediafile', 'headimage', filename + ".png"), 'rb') as fp:
-        data = fp.read()
-
-    response = make_response(data)
-    response.mimetype = "image/png"
-
-    return response
 
 def utc2local(utc_dtm):
     # UTC 时间转本地时间（ +8:00 ）
@@ -630,3 +477,4 @@ def utc2local(utc_dtm):
     utc_tm = datetime.utcfromtimestamp( 0 )
     offset = local_tm - utc_tm
     return utc_dtm + offset
+'''
