@@ -11,6 +11,7 @@ from . import user
 from .forms import LoginForm, UserSettingForm, PasswordSettingForm
 from .. import db
 from ..models.ua_models import ua_user, User, SystemRole
+from ..models.shop_models import shop_goods_classify, ShopPremission
 
 def user_required(f):
 
@@ -24,6 +25,22 @@ def user_required(f):
         return redirect(url_for('user.login'))
 
     return decorated_required
+
+def user_shop_permission_required(permission):
+
+    def decorator(f):
+
+        @wraps(f)
+        def decorated_function(*args, **kargs):
+
+            if current_user.user.ref_shop_user.first() and (current_user.user.ref_shop_user.first().shop_user_permission & permission) == permission:
+                return f(*args, **kargs)
+
+            return abort(403)
+
+        return decorated_function
+
+    return decorator
 
 
 @user.before_app_request
@@ -177,26 +194,149 @@ def passwordsetting():
 
     return render_template('user/passwordsetting.html', headimgurl=headimgurl, form=form)
 
+@user.route('/shopgoodsclassifymanager', methods=['GET'])
+@user.route('/shopgoodsclassifymanager/<string:puuid>', methods=['GET'])
+@user_required
+@user_shop_permission_required(ShopPremission.MANAGERGOODS)
+def shopgoodsclassifymanager(puuid='0'):
 
-'''
-@manager.route('/goodsclassifymanager', methods=['GET'])
-@manager.route('/goodsclassifymanager/<string:puuid>', methods=['GET'])
-@manager_required
-def goodsclassifymanager(puuid='0'):
-
-    headimgurl = url_for('static', filename='images/manager_blank_headimg.jpg')
+    headimgurl = url_for('static', filename='images/user_blank_headimg.png')
     
     if current_user.user.ua_user_headimg and current_user.user.ua_user_headimg != '':
         headimgurl = current_user.user.ua_user_headimg
 
     ppuuid = '0'
 
-    ppclassify = store_goods_classify.query.filter(store_goods_classify.store_goods_classify_uuid == puuid).first()
+    ppclassify = shop_goods_classify.query.filter(and_(shop_goods_classify.shop_goods_classify_uuid == puuid, shop_goods_classify.shop_basic_uuid == current_user.user.ref_shop_user.first().shop_basic_uuid)).first()
 
     if ppclassify:
-        ppuuid = ppclassify.store_goods_classify_puuid
+        ppuuid = ppclassify.shop_goods_classify_puuid
 
-    return render_template('manager/goodsclassifymanager.html', headimgurl=headimgurl, pid=puuid, ppid=ppuuid)
+    return render_template('user/shopgoodsclassifymanager.html', headimgurl=headimgurl, pid=puuid, ppid=ppuuid)
+
+
+@user.route('/addshopgoodsclassify', methods=['GET', 'POST'])
+@user_required
+@user_shop_permission_required(ShopPremission.MANAGERGOODS)
+def addshopgoodsclassify():
+
+    result = {
+        'code': 500,
+    }
+
+    name = request.form['name']
+    puuid = request.form['pid'] if 'pid' in request.form.keys() else '0'
+
+    if name and puuid:
+
+        classify = shop_goods_classify(
+            shop_goods_classify_puuid=puuid, 
+            shop_goods_classify_name=name,
+            shop_basic_uuid=current_user.user.ref_shop_user.first().shop_basic_uuid)
+
+        db.session.add(classify)
+        db.session.commit()
+
+        result["code"] = 200
+
+
+    return jsonify(result)
+
+@user.route('/delshopgoodsclassify', methods=['GET', 'POST'])
+@user_required
+@user_shop_permission_required(ShopPremission.MANAGERGOODS)
+def delshopgoodsclassify():
+    result = {
+        'code': 500,
+    }
+
+    uuid = request.form['uuid']
+
+    if uuid:
+
+        classify = shop_goods_classify.query.filter(and_(shop_goods_classify.shop_goods_classify_uuid == uuid, shop_goods_classify.shop_basic_uuid == current_user.user.ref_shop_user.first().shop_basic_uuid)).first()
+
+        if classify:
+
+            db.session.delete(classify)
+            db.session.commit()
+
+        result["code"] = 200
+
+
+    return jsonify(result)
+
+
+@user.route('/editshopgoodsclassify', methods=['GET', 'POST'])
+@user_required
+@user_shop_permission_required(ShopPremission.MANAGERGOODS)
+def editshopgoodsclassify():
+    result = {
+        'code': 500,
+    }
+
+    uuid = request.form['uuid']
+
+    if uuid:
+
+        classify = shop_goods_classify.query.filter(and_(shop_goods_classify.shop_goods_classify_uuid == uuid, shop_goods_classify.shop_basic_uuid == current_user.user.ref_shop_user.first().shop_basic_uuid)).first()
+
+        if classify:
+
+            if 'name' in request.form:
+                classify.shop_goods_classify_name = request.form['name']
+
+            db.session.add(classify)
+            db.session.commit()
+
+        result["code"] = 200
+
+
+    return jsonify(result)
+
+@user.route('/getshopgoodsclassify', methods=['GET', 'POST'])
+@user.route('/getshopgoodsclassify/<string:puuid>', methods=['GET', 'POST'])
+@user_required
+@user_shop_permission_required(ShopPremission.MANAGERGOODS)
+def getshopgoodsclassify(puuid='0'):
+
+    limit = int(request.form['limit']) if 'limit' in request.form.keys() else 10
+    start = int(request.form['start']) if 'start' in request.form.keys() else 0
+    page = int(request.form['page']) if 'page' in request.form.keys() else 1
+    draw = int(request.form['draw']) if 'draw' in request.form.keys() else 1
+    keyword = request.form['keyword'] if 'keyword' in request.form.keys() else None
+
+    classify = shop_goods_classify.query
+
+    classify = classify.filter(and_(shop_goods_classify.shop_goods_classify_puuid == puuid, shop_goods_classify.shop_basic_uuid == current_user.user.ref_shop_user.first().shop_basic_uuid))
+
+    if keyword:
+        rule = or_(shop_goods_classify.shop_goods_classify_name.like(f'%{keyword}%'))
+        classify = classify.filter(rule)
+    else:
+        pass
+
+    total = classify.count()
+    classify = classify.order_by(shop_goods_classify.shop_goods_classify_createtime.asc()).limit(limit).offset(start).all()
+    classifylist = []
+
+    for item in classify:
+        data = {
+            'uuid': item.shop_goods_classify_uuid,
+            'name': item.shop_goods_classify_name,
+        }
+        classifylist.append(data)
+
+    result = {
+        'code': 200,
+        'draw': draw,
+        'total': total,
+        'data': classifylist
+    }
+
+    return jsonify(result)
+
+'''
 
 @manager.route('/usermanager', methods=['GET'])
 @manager_required
@@ -350,124 +490,7 @@ def getuser():
 
     return jsonify(result)
 
-@manager.route('/addgoodsclassify', methods=['GET', 'POST'])
-@manager_required
-def addgoodsclassify():
 
-    result = {
-        'code': 500,
-    }
-
-    name = request.form['name']
-    puuid = request.form['pid'] if 'pid' in request.form.keys() else '0'
-
-    if name and puuid:
-
-        classify = store_goods_classify(
-            store_goods_classify_puuid=puuid, 
-            store_goods_classify_name=name)
-
-        db.session.add(classify)
-        db.session.commit()
-
-        result["code"] = 200
-
-
-    return jsonify(result)
-
-@manager.route('/delgoodsclassify', methods=['GET', 'POST'])
-@manager_required
-def delgoodsclassify():
-    result = {
-        'code': 500,
-    }
-
-    uuid = request.form['uuid']
-
-    if uuid:
-
-        classify = store_goods_classify.query.filter_by(store_goods_classify_uuid=uuid).first()
-
-        if classify:
-
-            db.session.delete(classify)
-            db.session.commit()
-
-        result["code"] = 200
-
-
-    return jsonify(result)
-
-@manager.route('/editgoodsclassify', methods=['GET', 'POST'])
-@manager_required
-def editgoodsclassify():
-    result = {
-        'code': 500,
-    }
-
-    uuid = request.form['uuid']
-
-    if uuid:
-
-        classify = store_goods_classify.query.filter_by(store_goods_classify_uuid=uuid).first()
-
-        if classify:
-
-            if 'name' in request.form:
-                classify.store_goods_classify_name = request.form['name']
-
-            db.session.add(classify)
-            db.session.commit()
-
-        result["code"] = 200
-
-
-    return jsonify(result)
-
-@manager.route('/getgoodsclassify', methods=['GET', 'POST'])
-@manager.route('/getgoodsclassify/<string:puuid>', methods=['GET', 'POST'])
-@manager_required
-def getgoodsclassify(puuid='0'):
-
-    limit = int(request.form['limit']) if 'limit' in request.form.keys() else 10
-    start = int(request.form['start']) if 'start' in request.form.keys() else 0
-    page = int(request.form['page']) if 'page' in request.form.keys() else 1
-    draw = int(request.form['draw']) if 'draw' in request.form.keys() else 1
-    keyword = request.form['keyword'] if 'keyword' in request.form.keys() else None
-
-    classify = store_goods_classify.query
-
-    
-    classify = classify.filter(store_goods_classify.store_goods_classify_puuid == puuid)
-
-    if keyword:
-        rule = or_(store_goods_classify.store_goods_classify_name.like(f'%{keyword}%'))
-        classify = classify.filter(rule)
-    else:
-        pass
-
-    total = classify.count()
-    classify = classify.order_by(store_goods_classify.store_goods_classify_createtime.asc()).limit(limit).offset(start).all()
-    classifylist = []
-
-    for item in classify:
-        data = {
-            'uuid': item.store_goods_classify_uuid,
-            'name': item.store_goods_classify_name,
-        }
-        classifylist.append(data)
-
-
-    result = {
-        'code': 200,
-        'draw': draw,
-        'total': total,
-        'data': classifylist
-    }
-
-    
-
-    return jsonify(result)
 
 
 

@@ -542,8 +542,14 @@ def editshopbasic():
 
                 if user:
 
+                    if user.ref_owned_shop_basic.first():
+                        return jsonify(result)
+
+                    if user.ref_shop_user.first():
+                        return jsonify(result)
+
                     shopuser = shop_user.query.filter(and_(shop_user.ua_user_uuid == shopbasic.shop_owned_user_uuid, shop_user.shop_basic_uuid == shopbasic.shop_basic_uuid)).all()
-                    
+
                     if shopuser:
 
                         for item in shopuser:

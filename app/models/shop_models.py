@@ -21,6 +21,9 @@ from .goods_models import goods_basis
 # fourth 4 bit for reserve
 class ShopPremission:
     MANAGER = 0xffff
+    MANAGERUSERS = 0xf000
+    MANAGERGOODS = 0x0f00
+    MANAGERORDERS = 0x00f0
 
 class shop_goods_classify(db.Model):
     __tablename__ = 'shop_goods_classify'
@@ -34,7 +37,7 @@ class shop_goods_classify(db.Model):
     ref_goods_basis = db.relationship('goods_basis', backref='shop_goods_classify', lazy='dynamic')
 
     def __init__(self, **kwargs):
-        super(ua_user, self).__init__(**kwargs)
+        super(shop_goods_classify, self).__init__(**kwargs)
 
         if self.shop_goods_classify_uuid is None:
 
